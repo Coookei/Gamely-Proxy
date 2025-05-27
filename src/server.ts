@@ -162,6 +162,17 @@ app.get("/api/:endpoint{/:param1}{/:param2}", async (req, res): Promise<any> => 
       `[API REQUEST] Path: ${process.env.API_URL}${path}, Query: ${JSON.stringify(filteredQuery)}`
     );
     const response = await axiosInstance.get(path, { params: filteredQuery });
+
+    // Add caching headers
+    const oneHour = 60 * 60;
+    const twoDays = 2 * 24 * 60 * 60;
+    res.set({
+      // Browser - recheck after 5m
+      "Cache-Control": `public, max-age=300`,
+      // Vercel Edge - keep for 1h in each PoP, serve stale for up to 2d
+      "CDN-Cache-Control": `public, max-age=${oneHour}, s-maxage=${twoDays}, stale-while-revalidate`,
+    });
+
     return res.status(response.status || 200).json(response.data);
   } catch (err: any) {
     const status = err.response?.status || 500;
