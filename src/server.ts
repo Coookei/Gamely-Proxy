@@ -51,8 +51,8 @@ const axiosInstance = axios.create({
   },
 });
 
-app.get("/", (req, res) => {
-  res.send("Welcome to the Proxy Server!");
+app.get(["/", "/api"], (req, res) => {
+  res.json({ message: "Welcome to the Gamely proxy server" });
 });
 
 interface ProxyParams {
@@ -180,6 +180,11 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   console.error(err);
   res.status(500).json({ error: "Internal server error" });
+});
+
+app.use((req: Request, res: Response) => {
+  // 404 handler
+  res.status(404).json({ error: "Not found" });
 });
 
 process.on("uncaughtException", (err) => {
