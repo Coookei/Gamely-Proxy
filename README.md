@@ -15,6 +15,7 @@ A secure, lightweight proxy server for the [RAWG API](https://rawg.io/apidocs), 
 ## Table of Contents 📑
 
 - [Setup](#setup-%EF%B8%8F)
+- [Deployment](#deployment-)
 - [Usage](#connecting-your-gamely-frontend-)
 - [Security](#security-)
 - [Contributing](#contributing-)
@@ -64,7 +65,21 @@ npm run build
 npm start
 ```
 
-## Connecting Your Gamely Frontend 🚀
+## Deployment 🚀
+
+You can deploy Gamely-Proxy in two main ways:
+
+- **Standalone Node.js App:**  
+  Host on your own server, or use hosting platforms. Just make sure to set your environment variables on your hosting platform.
+
+- **Vercel (Serverless):**  
+  This project includes a `vercel.json` file for easy deployment to [Vercel](https://vercel.com/).
+  1. Push your code to a GitHub/GitLab/Bitbucket repo.
+  2. Import the repo into Vercel.
+  3. Set your environment variables (`API_KEY`, etc.) in the Vercel dashboard.
+  4. Deploy!
+
+## Connecting Your Gamely Frontend 🎮
 
 To use the proxy with your Gamely frontend app, update your frontend configuration to point to the proxy server's URL.
 
