@@ -15,7 +15,10 @@ requiredEnvVars.forEach((envVar) => {
 
 const whitelist = (process.env.WHITELISTED_ORIGINS || "")
   .split(",")
-  .map((u) => u.trim())
+  .map((u) => {
+    if (u.endsWith("/")) u = u.slice(0, -1);
+    return u.trim();
+  })
   .filter(Boolean);
 // console.log("Whitelisted origins:", whitelist);
 
