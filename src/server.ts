@@ -48,6 +48,10 @@ const axiosInstance = axios.create({
   },
 });
 
+app.get("/", (req, res) => {
+  res.send("Welcome to the Proxy Server!");
+});
+
 interface ProxyParams {
   endpoint: "games" | "genres" | "platforms";
   param1?: string;
