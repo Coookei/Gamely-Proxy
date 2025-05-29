@@ -5,7 +5,7 @@
 ![Express](https://img.shields.io/badge/express.js-5.x-blue)
 ![TypeScript](https://img.shields.io/badge/typescript-5.x-blue)
 
-A secure, lightweight proxy server for the [RAWG API](https://rawg.io/apidocs), built with Node.js, Express, and TypeScript. Use this proxy to keep your RAWG API key safe and prevent exposure in client-side code.
+A secure, lightweight proxy server for the [RAWG API](https://rawg.io/apidocs), built with Node.js, Express, and TypeScript. Optimised with Redis-based caching for fast response times and per-IP rate limiting.
 
 > **Note:** This proxy is designed for use with [Gamely](https://github.com/Coookei/Gamely).  
 > **Why use it?** It keeps your RAWG API key secure by handling all API requests server-side, preventing exposure in client-side code.
@@ -39,7 +39,9 @@ npm install
 
 ### 3. Configure Environment Variables
 
-Create a `.env` file in the root directory with the following content:
+Create a `.env` file in the root directory.
+
+**Required:**
 
 ```env
 API_URL=https://api.rawg.io/api/
@@ -47,7 +49,6 @@ API_KEY=your_rawg_api_key_here
 WHITELISTED_ORIGINS=https://your-gamely-url.com/,http://localhost:5173/
 UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
 UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
-MAX_EXTERNAL_CALLS=1000
 ```
 
 - **API_URL**: The base URL for the RAWG API.
@@ -55,7 +56,22 @@ MAX_EXTERNAL_CALLS=1000
 - **WHITELISTED_ORIGINS**: Comma-separated list of allowed frontend origins (e.g., your local or deployed Gamely app URLs).
 - **UPSTASH_REDIS_REST_URL**: Your Upstash Redis REST URL (required for caching and rate limiting). [Get one here](https://upstash.com/pricing/redis).
 - **UPSTASH_REDIS_REST_TOKEN**: Your Upstash Redis REST token.
+
+**Optional (with defaults):**
+
+```env
+API_TIMEOUT=4000
+MAX_EXTERNAL_CALLS=1000
+RATE_LIMIT_PER_IP=200
+CACHE_DURATION=86400
+PORT=3000
+```
+
+- **API_TIMEOUT**: Timeout for RAWG API requests (default: 4000ms).
 - **MAX_EXTERNAL_CALLS**: Maximum number of RAWG API calls allowed per 24 hours (default: 1000).
+- **RATE_LIMIT_PER_IP**: Maximum requests per IP per hour (default: 200).
+- **CACHE_DURATION**: Redis cache duration in seconds (default: 86400).
+- **PORT**: Port to run the server on (default: 3000).
 
 > ⚠️ **Never commit your `.env` file or API key to version control.**
 
@@ -90,23 +106,31 @@ You can deploy Gamely-Proxy in two main ways:
 
 _All endpoints required for Gamely_
 
-- `GET /api/games`  
+### Games
+
+- `GET /games`  
   List games. Supports query params: `genres`, `parent_platforms`, `ordering`, `search`, `page`.
 
-- `GET /api/games/:slug`  
+- `GET /games/:slug`  
   Get details for a specific game by slug.
 
-- `GET /api/games/:gameId/screenshots`  
+- `GET /games/:gameId/screenshots`  
   Get screenshots for a specific game by numeric ID.
 
-- `GET /api/games/:gameId/movies`  
+- `GET /games/:gameId/movies`  
   Get movies for a specific game by numeric ID.
 
-- `GET /api/genres`  
+### Genres
+
+- `GET /genres`  
   List all genres.
 
-- `GET /api/platforms/lists/parents`  
+### Platforms
+
+- `GET /platforms/lists/parents`  
   List parent platforms.
+
+### Health
 
 - `GET /health`  
   Health check endpoint.
@@ -121,12 +145,11 @@ This ensures all RAWG API requests from your frontend are securely routed throug
 
 ## Security 🔒
 
-Never expose your RAWG API key in client-side code.  
-This proxy ensures your key stays on the server.
-
-- Only the proxy knows your API key.
+- Your RAWG API key is never exposed to the client or frontend code. All requests are proxied server-side.
 - Supports CORS for safe cross-origin requests.
-- Rate limiting and global call budget enforced via Upstash Redis.
+- Per-IP rate limiting and a global call budget are enforced using Upstash Redis to prevent abuse and accidental overuse.
+- The proxy uses [Helmet](https://helmetjs.github.io/) to set HTTP headers for enhanced security and disables the `x-powered-by` header.
+- All endpoints validate and sanitize incoming parameters to prevent misuse and ensure only safe, expected requests reach the RAWG API.
 
 ## Contributing 🤝
 
