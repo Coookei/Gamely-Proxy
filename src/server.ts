@@ -49,6 +49,7 @@ app.use(express.json());
 app.disable("x-powered-by");
 app.use(helmet());
 app.use(compression());
+app.set("trust proxy", true); // trust proxy to get real client IPs
 
 app.use(
   cors({
@@ -75,7 +76,7 @@ const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ keepAlive: true }),
 });
 
-app.get(["/", "/api"], (req, res) => {
+app.get(["/", "/api", "/api/"], (req, res) => {
   res.json({ message: "Welcome to the Gamely proxy server" });
 });
 
@@ -186,7 +187,7 @@ app.get("/api/:endpoint{/:param1}{/:param2}", async (req, res): Promise<any> => 
 
   if (res.headersSent) return;
 
-  // rate limi by ip
+  // rate limit by ip
   const ip = req.ip;
   if (ip) {
     const { success } = await clientLimiter.limit(ip);
