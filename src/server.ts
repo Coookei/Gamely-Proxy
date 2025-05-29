@@ -8,6 +8,8 @@ const app = express();
 registerMiddleware(app);
 registerRoutes(app);
 
-const server = app.listen(config.port, () => console.log(`Proxy listening on port ${config.port}`));
+const server = app.listen(config.port, () =>
+  console.log(`Gamely-Proxy listening on port ${config.port}`)
+);
 
 registerErrorHandlers(server);
