@@ -54,24 +54,17 @@ UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
 - **API_URL**: The base URL for the RAWG API.
 - **API_KEY**: Your personal RAWG API key. [Get one here](https://rawg.io/apidocs).
 - **WHITELISTED_ORIGINS**: Comma-separated list of allowed frontend origins (e.g., your local or deployed Gamely app URLs).
-- **UPSTASH_REDIS_REST_URL**: Your Upstash Redis REST URL (required for caching and rate limiting). [Get one here](https://upstash.com/pricing/redis).
-- **UPSTASH_REDIS_REST_TOKEN**: Your Upstash Redis REST token.
+- **UPSTASH_REDIS_REST_URL** / **UPSTASH_REDIS_REST_TOKEN**: Required for Redis-based caching and rate limiting. [Get credentials here](https://upstash.com/pricing/redis).
 
 **Optional (with defaults):**
 
 ```env
-API_TIMEOUT=4000
-MAX_EXTERNAL_CALLS=1000
-RATE_LIMIT_PER_IP=200
-CACHE_DURATION=86400
-PORT=3000
+API_TIMEOUT=4000           # Timeout for RAWG API requests in ms (default: 4000)
+MAX_EXTERNAL_CALLS=1000    # Max RAWG API calls per 24h (default: 1000)
+RATE_LIMIT_PER_IP=200      # Max proxy requests per IP per hour (default: 200)
+CACHE_DURATION=86400       # Redis cache duration in seconds (default: 86400)
+PORT=3000                  # Server port (default: 3000)
 ```
-
-- **API_TIMEOUT**: Timeout for RAWG API requests (default: 4000ms).
-- **MAX_EXTERNAL_CALLS**: Maximum number of RAWG API calls allowed per 24 hours (default: 1000).
-- **RATE_LIMIT_PER_IP**: Maximum requests per IP per hour (default: 200).
-- **CACHE_DURATION**: Redis cache duration in seconds (default: 86400).
-- **PORT**: Port to run the server on (default: 3000).
 
 > ⚠️ **Never commit your `.env` file or API key to version control.**
 
@@ -149,7 +142,7 @@ This ensures all RAWG API requests from your frontend are securely routed throug
 - Supports CORS for safe cross-origin requests.
 - Per-IP rate limiting and a global call budget are enforced using Upstash Redis to prevent abuse and accidental overuse.
 - The proxy uses [Helmet](https://helmetjs.github.io/) to set HTTP headers for enhanced security and disables the `x-powered-by` header.
-- All endpoints validate and sanitize incoming parameters to prevent misuse and ensure only safe, expected requests reach the RAWG API.
+- All endpoints validate and sanitise incoming parameters to prevent misuse and ensure only safe, expected requests reach the RAWG API.
 
 ## Contributing 🤝
 
