@@ -16,6 +16,7 @@ A secure, lightweight proxy server for the [RAWG API](https://rawg.io/apidocs), 
 
 - [Setup](#setup-%EF%B8%8F)
 - [Deployment](#deployment-)
+- [Endpoints](#endpoints-)
 - [Usage](#connecting-your-gamely-frontend-)
 - [Security](#security-)
 - [Contributing](#contributing-)
@@ -44,11 +45,17 @@ Create a `.env` file in the root directory with the following content:
 API_URL=https://api.rawg.io/api/
 API_KEY=your_rawg_api_key_here
 WHITELISTED_ORIGINS=https://your-gamely-url.com/,http://localhost:5173/
+UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
+MAX_EXTERNAL_CALLS=1000
 ```
 
 - **API_URL**: The base URL for the RAWG API.
 - **API_KEY**: Your personal RAWG API key. [Get one here](https://rawg.io/apidocs).
 - **WHITELISTED_ORIGINS**: Comma-separated list of allowed frontend origins (e.g., your local or deployed Gamely app URLs).
+- **UPSTASH_REDIS_REST_URL**: Your Upstash Redis REST URL (required for caching and rate limiting). [Get one here](https://upstash.com/pricing/redis).
+- **UPSTASH_REDIS_REST_TOKEN**: Your Upstash Redis REST token.
+- **MAX_EXTERNAL_CALLS**: Maximum number of RAWG API calls allowed per 24 hours (default: 1000).
 
 > ⚠️ **Never commit your `.env` file or API key to version control.**
 
@@ -79,6 +86,31 @@ You can deploy Gamely-Proxy in two main ways:
   3. Set your environment variables (`API_KEY`, etc.) in the Vercel dashboard.
   4. Deploy!
 
+## Endpoints ▹
+
+_All endpoints required for Gamely_
+
+- `GET /api/games`  
+  List games. Supports query params: `genres`, `parent_platforms`, `ordering`, `search`, `page`.
+
+- `GET /api/games/:slug`  
+  Get details for a specific game by slug.
+
+- `GET /api/games/:gameId/screenshots`  
+  Get screenshots for a specific game by numeric ID.
+
+- `GET /api/games/:gameId/movies`  
+  Get movies for a specific game by numeric ID.
+
+- `GET /api/genres`  
+  List all genres.
+
+- `GET /api/platforms/lists/parents`  
+  List parent platforms.
+
+- `GET /health`  
+  Health check endpoint.
+
 ## Connecting Your Gamely Frontend 🎮
 
 To use the proxy with your Gamely frontend app, update your frontend configuration to point to the proxy server's URL.
@@ -94,6 +126,7 @@ This proxy ensures your key stays on the server.
 
 - Only the proxy knows your API key.
 - Supports CORS for safe cross-origin requests.
+- Rate limiting and global call budget enforced via Upstash Redis.
 
 ## Contributing 🤝
 
