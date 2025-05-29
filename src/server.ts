@@ -1,12 +1,26 @@
-import express, { Request, Response, NextFunction } from "express";
-import dotenv from "dotenv";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import axios from "axios";
-import helmet from "helmet";
+import compression from "compression";
 import cors from "cors";
+import dotenv from "dotenv";
+import express, { NextFunction, Request, Response } from "express";
+import helmet from "helmet";
+import http from "http";
+import https from "https";
+
+const MAX_QUERY_VALUE_LENGTH = 100; // limit string query lengths
 
 dotenv.config();
 
-const requiredEnvVars = ["API_URL", "API_KEY", "WHITELISTED_ORIGINS"];
+const requiredEnvVars = [
+  "API_URL",
+  "API_KEY",
+  "WHITELISTED_ORIGINS",
+  "UPSTASH_REDIS_REST_URL",
+  "UPSTASH_REDIS_REST_TOKEN",
+  "MAX_EXTERNAL_CALLS",
+];
 requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
     throw new Error(`Missing required environment variable: ${envVar}`);
@@ -20,17 +34,25 @@ const whitelist = (process.env.WHITELISTED_ORIGINS || "")
     return u.trim();
   })
   .filter(Boolean);
-// console.log("Whitelisted origins:", whitelist);
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+const clientLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(200, "1h"),
+});
 
 const app = express();
 app.use(express.json());
 app.disable("x-powered-by");
 app.use(helmet());
+app.use(compression());
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // console.log(whitelist.includes(origin!) ? "Allowed origin:" : "Blocked origin:", origin);
       // allow requests with no origin (mobile apps, curl)
       if (!origin) return callback(null, true);
       if (whitelist.includes(origin)) {
@@ -45,10 +67,12 @@ app.use(
 
 const axiosInstance = axios.create({
   baseURL: process.env.API_URL,
-  timeout: 5_000,
+  timeout: 4_000,
   params: {
     key: process.env.API_KEY,
   },
+  httpAgent: new http.Agent({ keepAlive: true }),
+  httpsAgent: new https.Agent({ keepAlive: true }),
 });
 
 app.get(["/", "/api"], (req, res) => {
@@ -113,9 +137,14 @@ app.get("/api/:endpoint{/:param1}{/:param2}", async (req, res): Promise<any> => 
         "search",
         "page",
       ] as const;
+
       allowedQueryParams.forEach((param) => {
         if (req.query[param] !== undefined) {
-          filteredQuery[param] = req.query[param];
+          const value = req.query[param];
+          if (value && typeof value === "string" && value.length > MAX_QUERY_VALUE_LENGTH) {
+            return res.status(400).json({ error: `Query parameter "${param}" is too long` });
+          }
+          filteredQuery[param] = value;
         }
       });
     }
@@ -157,20 +186,50 @@ app.get("/api/:endpoint{/:param1}{/:param2}", async (req, res): Promise<any> => 
 
   if (res.headersSent) return;
 
+  // rate limi by ip
+  const ip = req.ip;
+  if (ip) {
+    const { success } = await clientLimiter.limit(ip);
+    if (!success) return res.status(429).json({ error: "Too many requests" });
+  }
+
+  // check if request is cached
+  const cacheKey = `cache:${path}:${JSON.stringify(filteredQuery)}`;
+  const cached = await redis.get<string>(cacheKey);
+  if (cached !== null) {
+    res.setHeader("X-Cache", "HIT");
+    return res.json(cached);
+  }
+
+  // check if global budget exceeded
+  const budgetKey = "external-call-count";
+  const calls = await redis.incr(budgetKey);
+  if (calls === 1) {
+    await redis.expire(budgetKey, 24 * 60 * 60);
+  }
+  const maxCalls = parseInt(process.env.MAX_EXTERNAL_CALLS!, 10) || 1000;
+  if (calls > maxCalls) {
+    return res.status(503).json({ error: "Global call budget reached" });
+  }
+
+  // fetch data from the external API
   try {
     console.log(
       `[API REQUEST] Path: ${process.env.API_URL}${path}, Query: ${JSON.stringify(filteredQuery)}`
     );
     const response = await axiosInstance.get(path, { params: filteredQuery });
 
-    // Add caching headers
-    const oneHour = 60 * 60;
+    await redis.set(cacheKey, JSON.stringify(response.data), {
+      ex: 24 * 60 * 60,
+    });
+
     const twoDays = 2 * 24 * 60 * 60;
     res.set({
       // Browser - recheck after 5m
       "Cache-Control": `public, max-age=300`,
       // Vercel Edge - keep for 1h in each PoP, serve stale for up to 2d
-      "CDN-Cache-Control": `public, max-age=${oneHour}, s-maxage=${twoDays}, stale-while-revalidate`,
+      "CDN-Cache-Control": `public, max-age=${twoDays}, s-maxage=${twoDays}, stale-while-revalidate`,
+      "X-Cache": "MISS",
     });
 
     return res.status(response.status || 200).json(response.data);
@@ -178,6 +237,15 @@ app.get("/api/:endpoint{/:param1}{/:param2}", async (req, res): Promise<any> => 
     const status = err.response?.status || 500;
     const body = err.response?.data || { error: "Upstream error" };
     return res.status(status).json(body);
+  }
+});
+
+app.get("/health", async (_, res) => {
+  try {
+    await redis.get("__up");
+    res.sendStatus(200);
+  } catch {
+    res.sendStatus(503);
   }
 });
 
