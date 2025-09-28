@@ -8,11 +8,17 @@
     "proxy",
     "api",
     "typescript",
-    "express"
+    "express",
+    "redis"
   ],
   "author": "Coookei",
   "license": "MIT",
   "main": "server.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Coookei/Gamely-Proxy.git"
+  },
+  "homepage": "https://gamely.tomfox.tech/api",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
