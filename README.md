@@ -19,7 +19,7 @@ A secure, lightweight proxy server for the [RAWG API](https://rawg.io/apidocs), 
 - [Endpoints](#endpoints-)
 - [Usage](#connecting-your-gamely-frontend-)
 - [Security](#security-)
-- [Monitoring](#monitoring-)
+- [Monitoring](#monitoring-%EF%B8%8F)
 - [Contributing](#contributing-)
 - [License](#license-)
 
