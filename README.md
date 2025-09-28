@@ -19,6 +19,7 @@ A secure, lightweight proxy server for the [RAWG API](https://rawg.io/apidocs), 
 - [Endpoints](#endpoints-)
 - [Usage](#connecting-your-gamely-frontend-)
 - [Security](#security-)
+- [Monitoring](#monitoring-)
 - [Contributing](#contributing-)
 - [License](#license-)
 
@@ -143,6 +144,14 @@ This ensures all RAWG API requests from your frontend are securely routed throug
 - Per-IP rate limiting and a global call budget are enforced using Upstash Redis to prevent abuse and accidental overuse.
 - The proxy uses [Helmet](https://helmetjs.github.io/) to set HTTP headers for enhanced security and disables the `x-powered-by` header.
 - All endpoints validate and sanitise incoming parameters to prevent misuse and ensure only safe, expected requests reach the RAWG API.
+
+## Monitoring ⏱️
+
+![Gamely-Proxy uptime monitor](public/screenshots/uptime.png)
+
+Keeping an external uptime monitor, such as [Uptime Kuma](https://github.com/louislam/uptime-kuma), with alerting (email, Slack, Discord, etc.) helps you detect outages before users do and gives you time to intervene.
+
+It is recommended to pair this proxy with automated alerts to ensure your infrastructure remains healthy and responsive.
 
 ## Contributing 🤝
 
