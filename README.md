@@ -34,8 +34,10 @@ cd Gamely-Proxy
 
 ### 2. Install Dependencies
 
+This project uses [pnpm](https://pnpm.io/). If you don't have it installed yet, you can follow the [pnpm install guide](https://pnpm.io/installation).
+
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Configure Environment Variables
@@ -72,14 +74,14 @@ PORT=3000                  # Server port (default: 3000)
 ### 4. Start the Proxy Server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Or for production:
 
 ```bash
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
 
 ## Deployment 🚀
