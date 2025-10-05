@@ -1,15 +1,17 @@
 {
   "name": "gamely-proxy",
+  "private": true,
   "version": "1.0.0",
-  "description": "Proxy API server for Gamely",
+  "description": "A secure, lightweight API proxy layer for Gamely, built with Node.js. Optimised with Redis-based caching for fast response times and per-IP rate limiting, forwarding requests to the upstream API while safeguarding your API keys.",
   "keywords": [
-    "gamely",
-    "server",
-    "proxy",
-    "api",
-    "typescript",
-    "express",
-    "redis"
+    "Node.js",
+    "TypeScript",
+    "Express",
+    "Redis",
+    "API",
+    "Proxy",
+    "Server",
+    "Gamely"
   ],
   "author": "Coookei",
   "license": "MIT",
